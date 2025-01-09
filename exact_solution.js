@@ -61,11 +61,16 @@ function initMap() {
     }
 
     calculateDistanceMatrix() {
-      const matrix = Array(this.n).fill().map(() => Array(this.n).fill(0));
+      const matrix = Array(this.n)
+        .fill()
+        .map(() => Array(this.n).fill(0));
       for (let i = 0; i < this.n; i++) {
         for (let j = 0; j < this.n; j++) {
           if (i !== j) {
-            matrix[i][j] = getHaversineDistance(this.waypoints[i], this.waypoints[j]);
+            matrix[i][j] = getHaversineDistance(
+              this.waypoints[i],
+              this.waypoints[j]
+            );
           }
         }
       }
@@ -75,7 +80,7 @@ function initMap() {
     // Calculate lower bound for remaining cities using minimum spanning edges
     calculateLowerBound(used, partial_tour) {
       let bound = 0;
-      
+
       // Add cost of existing path
       for (let i = 0; i < partial_tour.length - 1; i++) {
         bound += this.distanceMatrix[partial_tour[i]][partial_tour[i + 1]];
@@ -96,4 +101,58 @@ function initMap() {
 
       return bound;
     }
+    branchAndBound(partial_tour, used, current_cost) {
+      // If all cities are used, check if this is the best tour
+      if (partial_tour.length === this.n) {
+        const total_cost =
+          current_cost +
+          this.distanceMatrix[partial_tour[this.n - 1]][partial_tour[0]];
+        if (total_cost < this.bestCost) {
+          this.bestCost = total_cost;
+          this.bestTour = [...partial_tour];
+        }
+        return;
+      }
+
+      // Calculate lower bound for this partial solution
+      const bound = this.calculateLowerBound(used, partial_tour);
+      if (bound >= this.bestCost) {
+        return; // Prune this branch
+      }
+
+      // Try each unused city as the next city in the tour
+      for (let next = 0; next < this.n; next++) {
+        if (!used[next]) {
+          const new_cost =
+            current_cost +
+            (partial_tour.length > 0
+              ? this.distanceMatrix[partial_tour[partial_tour.length - 1]][next]
+              : 0);
+
+          if (new_cost < this.bestCost) {
+            used[next] = true;
+            partial_tour.push(next);
+
+            this.branchAndBound(partial_tour, used, new_cost);
+
+            // Backtrack
+            partial_tour.pop();
+            used[next] = false;
+          }
+        }
+      }
+    }
+
+    solve() {
+      const used = Array(this.n).fill(false);
+      const partial_tour = [];
+
+      // Start from first city
+      used[0] = true;
+      partial_tour.push(0);
+
+      this.branchAndBound(partial_tour, used, 0);
+      return this.bestTour;
+    }
+  }
 }
