@@ -27,7 +27,7 @@ The primary heuristic algorithm used is the algorithm of Christofides and Serdyu
 
 # Running the program
 
-In order to run the program, first replace the API key found in `config.js`. The API key can be trerieved from https://console.cloud.google.com/google/maps-api. Then open the `index.html` file and add in your stops! This program can also be customized to input lcoations from an array rather than the front-end UI.
+In order to run the program, first replace the API key found in `config.js`. The API key can be trerieved from https://console.cloud.google.com/google/maps-api. Then run the `index.html` file and add in your stops! This program can also be customized to input locations from an array rather than the front-end UI.
 
 # Variations
 
