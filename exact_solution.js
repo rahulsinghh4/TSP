@@ -47,41 +47,7 @@ function initMap() {
       Math.pow(Math.sin(dlat / 2), 2) +
       Math.cos(lat1) * Math.cos(lat2) * Math.pow(Math.sin(dlon / 2), 2);
     let c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return 3961 * c;
-  }
-
-  // Implements Prim's algorithm to find Minimum Spanning Tree
-  function findMST(vertices) {
-    const n = vertices.length;
-    const visited = new Array(n).fill(false);
-    const parent = new Array(n).fill(-1);
-    const key = new Array(n).fill(Infinity);
-
-    key[0] = 0;
-
-    for (let count = 0; count < n - 1; count++) {
-      let minKey = Infinity;
-      let minIndex = -1;
-
-      for (let v = 0; v < n; v++) {
-        if (!visited[v] && key[v] < minKey) {
-          minKey = key[v];
-          minIndex = v;
-        }
-      }
-
-      visited[minIndex] = true;
-
-      for (let v = 0; v < n; v++) {
-        const dist = getHaversineDistance(vertices[minIndex], vertices[v]);
-        if (!visited[v] && dist < key[v]) {
-          parent[v] = minIndex;
-          key[v] = dist;
-        }
-      }
-    }
-
-    return parent;
+    return 3961 * c; // Earth's radius in miles
   }
 
   // Find vertices with odd degree in the MST
