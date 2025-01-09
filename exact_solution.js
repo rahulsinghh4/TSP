@@ -101,6 +101,7 @@ function initMap() {
 
       return bound;
     }
+
     branchAndBound(partial_tour, used, current_cost) {
       // If all cities are used, check if this is the best tour
       if (partial_tour.length === this.n) {
@@ -155,6 +156,7 @@ function initMap() {
       return this.bestTour;
     }
   }
+
   function addToPath(polyPath, latlng, count) {
     polyPath.push(latlng);
     if (count != waypoints.length + 1) {
