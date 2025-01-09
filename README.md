@@ -1,5 +1,7 @@
 # TSP
 
+![image info](cover_image.png)
+
 Solution to the Traveling Salesman Problem using the Google Maps API with a front-end web interface for visualizing the route, adding stops, and selecting whether to return to origin.
 
 ### Problem-Statement
@@ -31,4 +33,4 @@ In order to run the program, first replace the API key found in `config.js`. The
 
 # Variations
 
-The option to vary the choice of algorithm is available by altering the `christofides_serduykov.js` file. You may choose to implement a solution that provides a more accurate result or even choose to implement an exact algorithm if you intend on using a relatively small number of stops.
+The option to vary the choice of algorithm is available by altering the `christofides_serduykov.js` file. If you know the number of destinations, n, is limited (n≤15), then you may choose to implement the exact solution instead of a heuritic algorithm. You can do this by modifying the `result.html` file, replacing the file path for `christofides_serdyukov.js` with `exact_solution.js`. This will provide the most optimal solution available.
