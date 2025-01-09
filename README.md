@@ -1,60 +1,34 @@
-![Header](./cover.png)
+# TSP
 
-# 🌎 Travelnetics ([demo](https://muyangye.github.io/Traveling_Salesman_Solver_Google_Maps/))
-The Traveling Salesman Problem statement is as follows:
-  ```Given a list of cities and the distances between each pair of cities, what is the shortest possible route that visits each city exactly once and returns to the origin city?```
+Solution to the Traveling Salesman Problem using the Google Maps API with a front-end web interface for visualizing the route, adding stops, and selecting whether to return to origin.
 
-This problem is **NP-hard** because it is as hard as a NP-Complete problem Hamilton Cycle and doesn't have an efficient certifier (not necessarily need this to be NP-Hard though). It can not be solved within polynomial time. The reason is this:
-Suppose there are 19 cities in total, then I have 19 choices of which city should I travel first, 18 choices of which
-city should I travel second, ..., 1 choice of which city should I travel at last. In total, that is **19!** possibilities,
-out of the **19!** possibilities, I pick the one that has the shortest total distance.
+### Problem-Statement
 
-If my computer can test **one billion** tours per second. It is going to take **19!/1,000,000,000** seconds ~ **3.85 years**
-to finish. Therefore, it is unfeasible to enumerate all possibilities. This project proposes a partial solution using
-`Genetic Algorithm` and calls `Google Maps API` to visualize. You can also utilize this project to plan your travel over 100+ places with ease.
+"Given a list of cities and the distances between each pair of cities, what is the shortest possible route that visits each city exactly once and returns to the origin city?"
 
-### You can see a demo [here](https://muyangye.github.io/Traveling_Salesman_Solver_Google_Maps/)
-(please note that I am using my personal Google Maps API key to host the demo. So I've set up restrictions of daily usage limit.
-If you see Google Map does not load correctly. It means the daily limit was exceeded. The settings for the demo site are
-`population` of 128, `numIterations` of 10000, and `mutChance` of 0.2)
+The problem itself is NP-Hard, as the optimal solution cannot be found in polynomial time for an arbitrary number of cities, n. The problem scales as n!.
 
-## ▶️ Steps to Run Locally
-1. Replace `apiKey` attribute in `config.js` with your own Google Maps API Key. If you do not have
-   one, here is the [link](https://developers.google.com/maps/documentation/javascript/get-api-key)
-   to create one (❗❗❗ Note: Fees charged by Google may apply ❗❗❗)
-2. Open `index.html`, type an address in the search bar and Google Maps' Autocomplete API will
-   show you a list of addresses. click on one will add a waypoint, the **first** waypoint added is the origin
-3. Check `Return To Origin?` or not, which means whether the solution should include going back to the origin
-3. Click `Calculate Best Route!` at the bottom of `index.html`, enjoy!
+# Distances
 
-## ⚙️ Customize Yourself
-### Edit `config.js`, which contains the following fields:
-- `popSize`: An `integer` == Population size == The total number of individual routes
-- `numIterations`: A `number` > `0` == How many iterations the Genetic Algorithm should run. Generally the
-more iterations, the more GA converges
-- `mutChance`: A `float` between `0` and `1` == Mutation chance, as explained in `How Does It Work?`
+The distances from point to point are calculated using the Haversine formula. Though not perfectly representative of the roads one may travel on, it provides a good estimation for the comparative distance between two locations. The more developed a region is, the more accurate the method is for finding an optimal route, due to the density of roads. The location data (coordinates) is pulled using the Google Maps API.
 
-## 💡 How Does It Work?
-### [Medium Article](https://medium.com/@realymyplus/introduction-to-genetic-algorithm-with-a-website-to-watch-it-solve-traveling-salesman-problem-live-a21105a3251a)
+# Visualization
 
-## ⚠️Known Defects
-- This project solely calculates the distance between 2 waypoints using **Haversine distance**.
-  However, this approach has 2 major disadvantages:
-  - **Shortest distance** is not always equal to **shortest time**
-  - **Haversine distance** calculates the distance of a straight line between 2 waypoints,
-  whereas there are other factors involved in the **shortest distance** such as the
-  **existence/straightness of a road** and/or **elevation**
-  - All of the above 2 problems can be solved by simply querying [Google Maps' Directions API](https://developers.google.com/maps/documentation/directions/overview),
-  but again, Google Maps charges very high for this API. In future versions, will add
-  support to let the user decide whether to use [Google Maps' Directions API](https://developers.google.com/maps/documentation/directions/overview)
-  or **Haversine distance** for calculating distances
-- Genetic Algorithm **does not gurantee** to generate the **global optimal solution** since
-  Genetic Algorithm may converge fairly quickly. This is why we want `mutChance` for mutation
-  to add a little bit of randomness here
+The solution is visualized on an HTML-based webpage that renders a map with Markers on it. The user has the option to search for places and add to a list (or remove from) to later find an optimal traversal of the locations.
 
-## 🏆Acknowledgments && Disclaimers
-- This project's idea originates from `ITP 435-Professional C++` taught at the
-  `University of Southern California` designed by [Sanjay Madhav](https://viterbi.usc.edu/directory/faculty/Madhav/Sanjay)
-- This is the first time I ever touched Javascript. I am a lifelong C++|Python|Java|PHP developer.
-  So please bear with me if my Javascript coding style is a mess. Any suggestions are
-  more than welcome!
+# Algorithm
+
+The primary heuristic algorithm used is the algorithm of Christofides and Serdyukov. This is an algorithm that provides a tour that is at most 1.5x the most optimal solution, provided that the location satisfy the triangle inequality and are symmetric (form a metric space). The summary of the algorithm is as follows:
+
+1. Find a minimum spanning tree for the problem.
+2. Create duplicates for every edge to create an Eulerian graph.
+3. Find an Eulerian tour for this graph.
+4. Convert to TSP: if a city is visited twice, then create a shortcut from the city before this in the tour to the one after this.
+
+# Running the program
+
+In order to run the program, first replace the API key found in `config.js`. The API key can be trerieved from https://console.cloud.google.com/google/maps-api. Then open the `index.html` file and add in your stops! This program can also be customized to input lcoations from an array rather than the front-end UI.
+
+# Variations
+
+The option to vary the choice of algorithm is available by altering the `christofides_serduykov.js` file. You may choose to implement a solution that provides a more accurate result or even choose to implement an exact algorithm if you intend on using a relatively small number of stops.
