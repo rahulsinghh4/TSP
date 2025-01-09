@@ -155,4 +155,60 @@ function initMap() {
       return this.bestTour;
     }
   }
+  function addToPath(polyPath, latlng, count) {
+    polyPath.push(latlng);
+    if (count != waypoints.length + 1) {
+      new google.maps.Marker({
+        position: latlng,
+        label: { text: count.toString(), color: "#00FF00" },
+        animation: google.maps.Animation.DROP,
+        map: map,
+      });
+    }
+  }
+
+  function startNewCalculation() {
+    window.location.href = "index.html";
+  }
+
+  // Set up event listeners and initialize
+  document
+    .getElementById("goto-index")
+    .addEventListener("click", startNewCalculation);
+  let waypointsList = document.getElementById("waypoints-list");
+
+  // Find and display the optimal solution
+  const solver = new ExactTSPSolver(waypoints);
+  const solution = solver.solve();
+  let polyPath = [];
+  let count = 0;
+
+  solution.forEach((waypointIndex) => {
+    const waypoint = waypoints[waypointIndex];
+    const waypointElement = document.createElement("li");
+    waypointElement.append(waypoint.name);
+    waypointsList.appendChild(waypointElement);
+    addToPath(
+      polyPath,
+      new google.maps.LatLng(
+        waypoint.lat / CONVERT_TO_RADIAN_CONST,
+        waypoint.lon / CONVERT_TO_RADIAN_CONST
+      ),
+      ++count
+    );
+  });
+
+  if (returnToOrigin === "true") {
+    addToPath(
+      polyPath,
+      new google.maps.LatLng(
+        waypoints[0].lat / CONVERT_TO_RADIAN_CONST,
+        waypoints[0].lon / CONVERT_TO_RADIAN_CONST
+      ),
+      ++count
+    );
+  }
+
+  poly.setPath(polyPath);
+  poly.setMap(map);
 }
