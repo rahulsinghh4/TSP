@@ -50,190 +50,50 @@ function initMap() {
     return 3961 * c; // Earth's radius in miles
   }
 
-  // Find vertices with odd degree in the MST
-  function findOddDegreeVertices(parent) {
-    const degree = new Array(parent.length).fill(0);
-    const oddVertices = [];
-
-    for (let i = 1; i < parent.length; i++) {
-      degree[i]++;
-      degree[parent[i]]++;
+  // Branch and Bound implementation for exact TSP solution
+  class ExactTSPSolver {
+    constructor(waypoints) {
+      this.waypoints = waypoints;
+      this.n = waypoints.length;
+      this.bestTour = null;
+      this.bestCost = Infinity;
+      this.distanceMatrix = this.calculateDistanceMatrix();
     }
 
-    for (let i = 0; i < degree.length; i++) {
-      if (degree[i] % 2 === 1) {
-        oddVertices.push(i);
-      }
-    }
-
-    return oddVertices;
-  }
-
-  // Find minimum weight perfect matching using a greedy approach
-  function findMinWeightMatching(vertices, oddVertices) {
-    const matching = [];
-    const used = new Set();
-
-    oddVertices.sort((a, b) => {
-      if (used.has(a) || used.has(b)) return 0;
-      return getHaversineDistance(vertices[a], vertices[b]);
-    });
-
-    for (let i = 0; i < oddVertices.length; i++) {
-      if (!used.has(oddVertices[i])) {
-        for (let j = i + 1; j < oddVertices.length; j++) {
-          if (!used.has(oddVertices[j])) {
-            matching.push([oddVertices[i], oddVertices[j]]);
-            used.add(oddVertices[i]);
-            used.add(oddVertices[j]);
-            break;
+    calculateDistanceMatrix() {
+      const matrix = Array(this.n).fill().map(() => Array(this.n).fill(0));
+      for (let i = 0; i < this.n; i++) {
+        for (let j = 0; j < this.n; j++) {
+          if (i !== j) {
+            matrix[i][j] = getHaversineDistance(this.waypoints[i], this.waypoints[j]);
           }
         }
       }
+      return matrix;
     }
 
-    return matching;
-  }
+    // Calculate lower bound for remaining cities using minimum spanning edges
+    calculateLowerBound(used, partial_tour) {
+      let bound = 0;
+      
+      // Add cost of existing path
+      for (let i = 0; i < partial_tour.length - 1; i++) {
+        bound += this.distanceMatrix[partial_tour[i]][partial_tour[i + 1]];
+      }
 
-  // Combine MST and matching to create Eulerian multigraph
-  function createEulerianGraph(parent, matching, n) {
-    const graph = Array.from({ length: n }, () => new Array(n).fill(0));
-
-    // Add MST edges
-    for (let i = 1; i < parent.length; i++) {
-      graph[i][parent[i]] = 1;
-      graph[parent[i]][i] = 1;
-    }
-
-    // Add matching edges
-    for (const [u, v] of matching) {
-      graph[u][v] = 1;
-      graph[v][u] = 1;
-    }
-
-    return graph;
-  }
-
-  // Find Eulerian circuit using Hierholzer's algorithm
-  function findEulerianCircuit(graph) {
-    const n = graph.length;
-    const circuit = [];
-    const stack = [0];
-
-    while (stack.length > 0) {
-      const v = stack[stack.length - 1];
-      let found = false;
-
-      for (let u = 0; u < n; u++) {
-        if (graph[v][u] > 0) {
-          stack.push(u);
-          graph[v][u]--;
-          graph[u][v]--;
-          found = true;
-          break;
+      // For each unused city, add minimum cost edge
+      for (let i = 0; i < this.n; i++) {
+        if (!used[i]) {
+          let minEdge = Infinity;
+          for (let j = 0; j < this.n; j++) {
+            if (i !== j && this.distanceMatrix[i][j] < minEdge) {
+              minEdge = this.distanceMatrix[i][j];
+            }
+          }
+          bound += minEdge;
         }
       }
 
-      if (!found) {
-        circuit.push(stack.pop());
-      }
+      return bound;
     }
-
-    return circuit.reverse();
-  }
-
-  // Convert Eulerian circuit to Hamiltonian cycle by removing duplicates
-  function makeHamiltonianCycle(circuit) {
-    const visited = new Set();
-    const cycle = [];
-
-    for (const vertex of circuit) {
-      if (!visited.has(vertex)) {
-        cycle.push(vertex);
-        visited.add(vertex);
-      }
-    }
-
-    return cycle;
-  }
-
-  function addToPath(polyPath, latlng, count) {
-    polyPath.push(latlng);
-    if (count != waypoints.length + 1) {
-      new google.maps.Marker({
-        position: latlng,
-        label: { text: count.toString(), color: "#00FF00" },
-        animation: google.maps.Animation.DROP,
-        map: map,
-      });
-    }
-  }
-
-  function startNewCalculation() {
-    window.location.href = "index.html";
-  }
-
-  // Main Christofides algorithm implementation
-  function findOptimalRoute(waypoints) {
-    // 1. Find MST
-    const mst = findMST(waypoints);
-
-    // 2. Find vertices with odd degree
-    const oddVertices = findOddDegreeVertices(mst);
-
-    // 3. Find minimum weight perfect matching
-    const matching = findMinWeightMatching(waypoints, oddVertices);
-
-    // 4. Combine MST and matching to create Eulerian multigraph
-    const eulerianGraph = createEulerianGraph(mst, matching, waypoints.length);
-
-    // 5. Find Eulerian circuit
-    const eulerianCircuit = findEulerianCircuit(eulerianGraph);
-
-    // 6. Convert to Hamiltonian cycle
-    const solution = makeHamiltonianCycle(eulerianCircuit);
-
-    return solution;
-  }
-
-  // Set up event listeners and initialize
-  document
-    .getElementById("goto-index")
-    .addEventListener("click", startNewCalculation);
-  let waypointsList = document.getElementById("waypoints-list");
-
-  // Find and display the solution
-  const solution = findOptimalRoute(waypoints);
-  let polyPath = [];
-  let count = 0;
-  let waypointElement = null;
-
-  solution.forEach((waypointIndex) => {
-    const waypoint = waypoints[waypointIndex];
-    waypointElement = document.createElement("li");
-    waypointElement.append(waypoint.name);
-    waypointsList.appendChild(waypointElement);
-    addToPath(
-      polyPath,
-      new google.maps.LatLng(
-        waypoint.lat / CONVERT_TO_RADIAN_CONST,
-        waypoint.lon / CONVERT_TO_RADIAN_CONST
-      ),
-      ++count
-    );
-  });
-
-  if (returnToOrigin === "true") {
-    addToPath(
-      polyPath,
-      new google.maps.LatLng(
-        waypoints[0].lat / CONVERT_TO_RADIAN_CONST,
-        waypoints[0].lon / CONVERT_TO_RADIAN_CONST
-      ),
-      ++count
-    );
-  }
-
-  poly.setPath(polyPath);
-  poly.setMap(map);
 }
